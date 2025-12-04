@@ -1,0 +1,6 @@
+psycopg2-binary
+xmlschema==4.1.0
+lxml==6.0.2
+sqlalchemy==2.0.25
+aws_secretsmanager_caching
+aws_lambda_powertools

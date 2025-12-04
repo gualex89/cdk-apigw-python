@@ -1,0 +1,79 @@
+from aws_cdk import (
+    Stack,
+    Duration,
+    aws_lambda as _lambda,
+    aws_secretsmanager as secretsmanager,
+    aws_apigateway as apigw
+)
+from constructs import Construct
+
+
+class MiStack(Stack):
+
+    def __init__(self, scope: Construct, id: str, *,
+                 env_name: str,
+                 aws_secret: str,
+                 **kwargs) -> None:
+
+        super().__init__(scope, id, env=kwargs.get("env"))
+
+
+        #
+        # 1️⃣ Importar el secreto de RDS
+        #
+        secret = secretsmanager.Secret.from_secret_name_v2(
+            self,
+            f"{env_name}-rds-secret",
+            aws_secret
+        )
+
+        #
+        # 2️⃣ Crear Layer con dependencias (construido por el pipeline)
+        #
+        lambda_layer = _lambda.LayerVersion(
+            self,
+            f"{env_name}-deps-layer",
+            code=_lambda.Code.from_asset("src/layers/deps"),
+            compatible_runtimes=[_lambda.Runtime.PYTHON_3_12],
+            description="Shared Python dependencies"
+        )
+
+        #
+        # 3️⃣ Crear Lambda
+        #
+        lambda_fn = _lambda.Function(
+            self,
+            f"{env_name}-lambda-rds",
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            handler="handler.handler",
+            code=_lambda.Code.from_asset("src/main"),
+            timeout=Duration.seconds(20),
+            memory_size=512,
+            environment={
+                "SECRET_NAME": aws_secret,
+                "ENVIRONMENT": env_name
+            },
+            layers=[lambda_layer]
+        )
+
+        # Permisos para leer secreto
+        secret.grant_read(lambda_fn)
+
+        #
+        # 4️⃣ API Gateway
+        #
+        api = apigw.RestApi(
+            self,
+            f"{env_name}-api",
+            rest_api_name=f"{env_name}-api",
+            description="API Gateway creada por CDK"
+        )
+
+        # GET /health
+        api.root.add_resource("health").add_method("GET")
+
+        # GET /db-test → Lambda
+        api.root.add_resource("db-test").add_method(
+            "GET",
+            apigw.LambdaIntegration(lambda_fn)
+        )
