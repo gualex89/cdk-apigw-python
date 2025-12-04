@@ -5,7 +5,7 @@ from mi_stage import MiStage
 
 app = cdk.App()
 
-# ❗ Ambiente fijo (DEV) — sin context
+# ❗ Ambiente fijo (DEV)
 account = "798429904238"
 region = "us-east-2"
 
