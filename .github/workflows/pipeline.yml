@@ -41,6 +41,6 @@ jobs:
     - name: CDK Synth
       run: cdk synth
 
-    # 4️⃣ CDK Deploy a DevStage
+    # 4️⃣ CDK Deploy del STACK real
     - name: CDK Deploy DEV
-      run: cdk deploy DevStage --require-approval never
+      run: cdk deploy DevMainStack --require-approval never
