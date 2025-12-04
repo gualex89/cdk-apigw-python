@@ -43,15 +43,8 @@ jobs:
 
     # 4️⃣ CDK Deploy del STACK real
     - name: CDK Deploy DEV
-      run: |
-        cdk deploy DevStage-DevMainStack \
-          -c dev.account_id=798429904238 \
-          -c dev.region=us-east-2 \
-          -c dev.aws_vpc=vpc-05d1bf6aa6b689c5b \
-          -c dev.aws_secret=test2/rds-credentials \
-          -c dev.aws_arn_secret=arn:aws:secretsmanager:us-east-2:798429904238:secret:test2/rds-credentials-a4cykn \
-          -c dev.aws_arn_db=arn:aws:rds:us-east-2:798429904238:db:datos-clientes \
-          --require-approval never
+      run: cdk deploy DevStage-DevMainStack --require-approval never
+
 
 
 
