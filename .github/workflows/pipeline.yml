@@ -12,6 +12,13 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
+    - name: Show workspace structure
+      run: |
+        echo "Current path:"
+        pwd
+        echo "Files:"
+        ls -R .
+
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
@@ -20,24 +27,20 @@ jobs:
     - name: Install CDK CLI
       run: npm install -g aws-cdk
 
-    # Instalamos dependencias del CDK (requirements.txt en la raíz del proyecto)
     - name: Install CDK Python dependencies
-      working-directory: cdk-apigw-python
+      working-directory: .
       run: pip install -r requirements.txt
 
-    # 1️⃣ Construcción del Lambda Layer
     - name: Build Lambda Layer
-      working-directory: cdk-apigw-python
+      working-directory: .
       run: |
         mkdir -p src/layers/deps/python
         pip install -r src/layers/deps/requirements.txt -t src/layers/deps/python
 
-    # 2️⃣ PYTHONPATH obligatorio para importar mi_stack, mi_stage, etc.
     - name: Add project to PYTHONPATH
-      working-directory: cdk-apigw-python
+      working-directory: .
       run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
-    # 3️⃣ Autenticación en AWS
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
@@ -45,17 +48,14 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-2
 
-    # 4️⃣ CDK Synth
     - name: CDK Synth
-      working-directory: cdk-apigw-python
+      working-directory: .
       run: cdk synth
 
-    # 5️⃣ Mostrar los stacks disponibles
     - name: CDK List
-      working-directory: cdk-apigw-python
+      working-directory: .
       run: cdk ls
 
-    # 6️⃣ Deploy Final
     - name: CDK Deploy DEV
-      working-directory: cdk-apigw-python
+      working-directory: .
       run: cdk deploy "DevStage-DevMainStack" --require-approval never
