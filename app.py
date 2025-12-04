@@ -12,8 +12,11 @@ for env_name in ENVIRONMENTS:
     # Obtener contexto desde cdk.json
     env_context = app.node.try_get_context(env_name)
 
-    if env_context is None:
-        raise ValueError(f"Contexto para environment '{env_name}' no existe en cdk.json")
+    if not env_context:
+        env_context = app.node.get_context(env_name)
+
+    if not env_context:
+        raise ValueError(f"Contexto para '{env_name}' no existe.")
 
     account = env_context["account_id"]
     region = env_context["region"]
