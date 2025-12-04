@@ -9,28 +9,29 @@ app = cdk.App()
 ENVIRONMENTS = ["dev", "prod"]
 
 for env_name in ENVIRONMENTS:
-    # Obtener contexto desde cdk.json
+    
+    # Obtener contexto desde la CLI (-c dev) o desde cdk.json
     env_context = app.node.try_get_context(env_name)
 
-    if not env_context:
+    # Si el contexto viene como True (cuando usamos -c dev), cargar el bloque real desde cdk.json
+    if env_context is True:
         env_context = app.node.get_context(env_name)
 
-    if not env_context:
-        raise ValueError(f"Contexto para '{env_name}' no existe.")
+    # Si sigue sin haber contexto, error
+    if not isinstance(env_context, dict):
+        raise ValueError(f"Contexto para '{env_name}' no existe o no es válido.")
 
+    # Extraer valores del contexto
     account = env_context["account_id"]
     region = env_context["region"]
 
-    # Environment que CDK usará para desplegar
     primary_env = Environment(account=account, region=region)
 
-    # Parámetros que pasaremos al Stage
     aws_vpc = env_context["aws_vpc"]
     aws_secret = env_context["aws_secret"]
     aws_arn_secret = env_context["aws_arn_secret"]
     aws_arn_db = env_context["aws_arn_db"]
 
-    # Crear un Stage por ambiente (ej: DevStage, ProdStage)
     MiStage(
         app,
         f"{env_name.capitalize()}Stage",
@@ -43,4 +44,3 @@ for env_name in ENVIRONMENTS:
     )
 
 app.synth()
-
