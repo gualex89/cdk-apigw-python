@@ -45,6 +45,10 @@ jobs:
     - name: CDK Synth
       run: cdk synth
 
+    # 3.5️⃣ Mostrar los stacks detectados
+    - name: CDK List
+      run: cdk ls
+
     # 5️⃣ Deploy FINAL
     - name: CDK Deploy DEV
       run: cdk deploy DevStage-DevMainStack --require-approval never
