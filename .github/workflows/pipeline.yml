@@ -58,4 +58,5 @@ jobs:
 
     - name: CDK Deploy DEV
       working-directory: .
-      run: cdk deploy "DevStage-DevMainStack" --require-approval never
+      run: cdk deploy --require-approval never
+  
