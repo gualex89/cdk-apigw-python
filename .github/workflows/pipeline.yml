@@ -51,4 +51,5 @@ jobs:
 
     # 5️⃣ Deploy FINAL
     - name: CDK Deploy DEV
-      run: cdk deploy DevStage-DevMainStack --require-approval never
+      run: cdk deploy "DevStage-DevMainStack" --require-approval never
+
