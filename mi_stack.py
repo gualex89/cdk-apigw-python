@@ -131,6 +131,8 @@ class MiStack(Stack):
                 "method.request.querystring.tipo_solicitud": True,
                 "method.request.querystring.prioridad": True,
                 "method.request.querystring.fecha_materializacion": False
+                "method.request.querystring.fecha_creacion_desde": False,
+                "method.request.querystring.fecha_creacion_hasta": False
             },
             request_validator=validator
         )

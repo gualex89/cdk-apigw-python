@@ -21,6 +21,9 @@ def handler(event, context):
     query_params = event.get("queryStringParameters", {}) or {}
     tipo_solicitud = query_params.get("tipo_solicitud")
     prioridad = query_params.get("prioridad")
+    fecha_materializacion = query_params.get("fecha_materializacion")
+    fecha_creacion_desde = query_params.get("fecha_creacion_desde")
+    fecha_creacion_hasta = query_params.get("fecha_creacion_hasta")
 
     try:
         secret_name = os.environ["SECRET_NAME"]
@@ -32,7 +35,7 @@ def handler(event, context):
         secret_value = client.get_secret_value(SecretId=secret_name)
         creds = json.loads(secret_value["SecretString"])
 
-        result = fetch_solicitud(creds, tipo_solicitud, prioridad)
+        result = fetch_solicitud(creds, tipo_solicitud, prioridad, fecha_materializacion, fecha_creacion_desde, fecha_creacion_hasta)
 
         return {
             "statusCode": 200,
