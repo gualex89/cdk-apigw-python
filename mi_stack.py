@@ -75,5 +75,10 @@ class MiStack(Stack):
         # GET /db-test → Lambda
         api.root.add_resource("db-test").add_method(
             "GET",
-            apigw.LambdaIntegration(lambda_fn)
+            apigw.LambdaIntegration(lambda_fn),
+            request_parameters={
+                "method.request.querystring.tipo_solicitud": True,
+                "method.request.querystring.prioridad": True,
+                "method.request.querystring.fecha_materializacion": False
+            }
         )
