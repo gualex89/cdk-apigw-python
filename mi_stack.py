@@ -84,6 +84,20 @@ class MiStack(Stack):
             password_policy=cognito.PasswordPolicy(min_length=8),
         )
         
+        resource_server = user_pool.add_resource_server(
+            f"{env_name}-resource-server",
+            identifier=f"{env_name}-api",
+            scopes=[
+                cognito.ResourceServerScope(
+                    scope_name="read",
+                    scope_description="Read access for backend API"
+                )
+            ]
+        )
+
+        api_scope = cognito.OAuthScope.resource_server(resource_server, "read")
+
+        
         user_pool_domain = user_pool.add_domain(
             f"{env_name}-domain",
             cognito_domain=cognito.CognitoDomainOptions(
@@ -101,9 +115,10 @@ class MiStack(Stack):
                 flows=cognito.OAuthFlows(
                     client_credentials=True
                 ),
-                scopes=[]   # 🔥 Vacío = permitido ; NO usar OPENID
+                scopes=[api_scope]     # 🔥 Scope válido, obligatorio
             )
         )
+
 
 
         
