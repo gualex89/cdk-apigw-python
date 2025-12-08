@@ -2,6 +2,7 @@ import os
 import json
 import boto3
 from datetime import date, datetime
+from decimal import Decimal
 from helpers.db import fetch_solicitud
 
 
