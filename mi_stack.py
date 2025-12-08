@@ -109,18 +109,10 @@ class MiStack(Stack):
             )
         )
 
-        # 9️⃣ JWT Authorizer (LOW LEVEL)
-        jwt_authorizer = apigw.CfnAuthorizer(
+        authorizer = apigw.CognitoUserPoolsAuthorizer(
             self,
-            f"{env_name}-jwt-authorizer",
-            name=f"{env_name}-jwt-authorizer",
-            rest_api_id=api.rest_api_id,
-            identity_source="method.request.header.Authorization",
-            type="JWT",
-            jwt_configuration=apigw.CfnAuthorizer.JWTConfigurationProperty(
-                issuer=f"https://cognito-idp.us-east-2.amazonaws.com/{user_pool.user_pool_id}",
-                audience=[user_pool_client.user_pool_client_id]
-            )
+            f"{env_name}-authorizer",
+            cognito_user_pools=[user_pool]
         )
 
         # 🔟 Endpoints
@@ -129,10 +121,11 @@ class MiStack(Stack):
         # Endpoint protegido
         db_test_resource = api.root.add_resource("db-test")
 
-        db_test_method = db_test_resource.add_method(
+        db_test_resource.add_method(
             "GET",
             apigw.LambdaIntegration(lambda_fn),
-            authorization_type=apigw.AuthorizationType.CUSTOM,  # OBLIGATORIO
+            authorization_type=apigw.AuthorizationType.COGNITO,
+            authorizer=authorizer,
             request_parameters={
                 "method.request.querystring.tipo_solicitud": True,
                 "method.request.querystring.prioridad": True,
@@ -141,8 +134,6 @@ class MiStack(Stack):
             request_validator=validator
         )
 
+
         # Asignar el Authorizer al método manualmente
-        db_test_method_resource = db_test_method.node.default_child
-        db_test_method_resource.add_override(
-            "Properties.AuthorizerId", jwt_authorizer.ref
-        )
+        
