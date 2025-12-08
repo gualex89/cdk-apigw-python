@@ -99,11 +99,12 @@ class MiStack(Stack):
             ),
             o_auth=cognito.OAuthSettings(
                 flows=cognito.OAuthFlows(
-                    client_credentials=True   # 🔥 ESTO ES LO IMPORTANTE
+                    client_credentials=True
                 ),
-                scopes=[cognito.OAuthScope.OPENID]
+                scopes=[]   # 🔥 Vacío = permitido ; NO usar OPENID
             )
         )
+
 
         
         authorizer = apigw.CognitoUserPoolsAuthorizer(
