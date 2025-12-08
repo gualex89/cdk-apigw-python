@@ -68,6 +68,13 @@ class MiStack(Stack):
             rest_api_name=f"{env_name}-api",
             description="API Gateway creada por CDK"
         )
+        
+        validator = apigw.RequestValidator(
+            self,
+            f"{env_name}-request-validator",
+            rest_api=api,
+            validate_request_parameters=True
+        )
 
         # GET /health
         api.root.add_resource("health").add_method("GET")
@@ -80,5 +87,6 @@ class MiStack(Stack):
                 "method.request.querystring.tipo_solicitud": True,
                 "method.request.querystring.prioridad": True,
                 "method.request.querystring.fecha_materializacion": False
-            }
+            },
+            request_validator=validator
         )
