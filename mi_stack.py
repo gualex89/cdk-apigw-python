@@ -104,6 +104,7 @@ class MiStack(Stack):
                 domain_prefix=f"{env_name}-auth-{id.lower()}"
             )
         )
+        
         user_pool_client = user_pool.add_client(
             f"{env_name}-client",
             generate_secret=True,
