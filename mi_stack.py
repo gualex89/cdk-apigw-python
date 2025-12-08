@@ -104,7 +104,7 @@ class MiStack(Stack):
 
         api_scope = cognito.OAuthScope.resource_server(
             resource_server,
-            read_scope.scope_name   # 🔥 FIX FINAL — lo único que era necesario cambiar
+            read_scope   # 🔥 FIX FINAL — lo único que era necesario cambiar
         )
 
         #
