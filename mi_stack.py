@@ -19,7 +19,7 @@ class MiStack(Stack):
         super().__init__(scope, id, env=kwargs.get("env"))
 
         #
-        # 1️⃣ Importar el secreto de RDS
+        # 1️⃣ Importar el secreto
         #
         secret = secretsmanager.Secret.from_secret_name_v2(
             self,
@@ -28,18 +28,17 @@ class MiStack(Stack):
         )
 
         #
-        # 2️⃣ Crear Layer
+        # 2️⃣ Layer
         #
         lambda_layer = _lambda.LayerVersion(
             self,
             f"{env_name}-deps-layer",
             code=_lambda.Code.from_asset("src/layers/deps"),
-            compatible_runtimes=[_lambda.Runtime.PYTHON_3_12],
-            description="Shared Python dependencies"
+            compatible_runtimes=[_lambda.Runtime.PYTHON_3_12]
         )
 
         #
-        # 3️⃣ Crear Lambda
+        # 3️⃣ Lambda
         #
         lambda_fn = _lambda.Function(
             self,
@@ -64,55 +63,30 @@ class MiStack(Stack):
         api = apigw.RestApi(
             self,
             f"{env_name}-api",
-            rest_api_name=f"{env_name}-api",
-            description="API Gateway creada por CDK"
+            rest_api_name=f"{env_name}-api"
         )
 
         validator = apigw.RequestValidator(
             self,
-            f"{env_name}-request-validator",
+            f"{env_name}-validator",
             rest_api=api,
             validate_request_parameters=True
         )
 
         #
-        # 5️⃣ User Pool
+        # 5️⃣ User Pool (sin Resource Server)
         #
         user_pool = cognito.UserPool(
             self,
             f"{env_name}-userpool",
             self_sign_up_enabled=False,
             sign_in_aliases=cognito.SignInAliases(email=True),
-            password_policy=cognito.PasswordPolicy(min_length=8),
         )
 
         #
-        # 6️⃣ Resource Server + Scope
+        # 6️⃣ Cognito Domain
         #
-        read_scope = cognito.ResourceServerScope(
-            scope_name="read",
-            scope_description="Read access for backend API"
-        )
-
-        resource_server = user_pool.add_resource_server(
-            f"{env_name}-resource-server",
-            identifier=f"{env_name}-api",
-            scopes=[read_scope]
-        )
-
-        #
-        # ⭐ CDK v2 → OAuthScope debe ser un OAuthScope real
-        # Este formato SÍ es aceptado: "<identifier>/<scope>"
-        #
-        api_scope = cognito.OAuthScope.resource_server(
-            resource_server,
-            f"{env_name}-api/read"
-        )
-
-        #
-        # 7️⃣ Dominio Cognito
-        #
-        user_pool_domain = user_pool.add_domain(
+        user_pool.add_domain(
             f"{env_name}-domain",
             cognito_domain=cognito.CognitoDomainOptions(
                 domain_prefix=f"{env_name}-auth-{id.lower()}"
@@ -120,9 +94,9 @@ class MiStack(Stack):
         )
 
         #
-        # 8️⃣ User Pool Client (OAuth2 Client Credentials)
+        # 7️⃣ User Pool App Client (Client Credentials SIN scopes)
         #
-        user_pool_client = user_pool.add_client(
+        client = user_pool.add_client(
             f"{env_name}-client",
             generate_secret=True,
             auth_flows=cognito.AuthFlow(
@@ -132,13 +106,13 @@ class MiStack(Stack):
             o_auth=cognito.OAuthSettings(
                 flows=cognito.OAuthFlows(
                     client_credentials=True
-                ),
-                scopes=[api_scope]   # <-- DEBE ser OAuthScope[]
+                )
+                # NO SCOPES → compatible con tu CDK
             )
         )
 
         #
-        # 9️⃣ Authorizer API Gateway
+        # 8️⃣ Authorizer
         #
         authorizer = apigw.CognitoUserPoolsAuthorizer(
             self,
@@ -147,9 +121,8 @@ class MiStack(Stack):
         )
 
         #
-        # 🔟 Rutas
+        # 9️⃣ Rutas
         #
-
         api.root.add_resource("health").add_method("GET")
 
         api.root.add_resource("db-test").add_method(
@@ -159,8 +132,7 @@ class MiStack(Stack):
             authorizer=authorizer,
             request_parameters={
                 "method.request.querystring.tipo_solicitud": True,
-                "method.request.querystring.prioridad": True,
-                "method.request.querystring.fecha_materializacion": False
+                "method.request.querystring.prioridad": True
             },
             request_validator=validator
         )
