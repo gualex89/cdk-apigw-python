@@ -109,7 +109,7 @@ class MiStack(Stack):
         user_pool.add_domain(
             f"{env_name}-domain",
             cognito_domain=cognito.CognitoDomainOptions(
-                domain_prefix=f"{env_name}-auth-{id.lower()}"
+                domain_prefix=f"{env_name}-auth-v2-{id.lower()}"
             )
         )
 
