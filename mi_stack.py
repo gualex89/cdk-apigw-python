@@ -76,6 +76,13 @@ class MiStack(Stack):
             rest_api=api,
             validate_request_parameters=True
         )
+        
+        authorizer = apigw.CognitoUserPoolsAuthorizer(
+            self,
+            f"{env_name}-authorizer",
+            cognito_user_pools=[user_pool]
+        )
+        
 
         # GET /health
         api.root.add_resource("health").add_method("GET")
@@ -121,11 +128,7 @@ class MiStack(Stack):
             generate_secret=True
         )
         
-        authorizer = apigw.CognitoUserPoolsAuthorizer(
-            self,
-            f"{env_name}-authorizer",
-            cognito_user_pools=[user_pool]
-        )
+        
 
 
         
