@@ -55,7 +55,8 @@ def handler(event, context):
                 "timestamp": str(result[0]),
                 "tipo_solicitud": tipo_solicitud,
                 "prioridad": prioridad,
-                "fecha_materializacion": fecha_materializacion
+                "fecha_materializacion": fecha_materializacion,
+                "result": result
             })
         }
 
