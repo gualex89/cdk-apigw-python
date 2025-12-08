@@ -7,7 +7,13 @@ import psycopg2
 def handler(event, context):
     # 1️⃣ Log de inicio
     print(f"[START] Lambda execution started. RequestId={context.aws_request_id}")
+    
+    tipo_solicitud = event.get('queryStringParameters', {}).get('tipo_solicitud')
+    prioridad = event.get('queryStringParameters', {}).get('prioridad')
+    fecha_materializacion = event.get('queryStringParameters', {}).get('fecha_materializacion')
 
+    print(f"tipo_solicitud: {tipo_solicitud}, prioridad: {prioridad}, fecha_materializacion: {fecha_materializacion}")
+    
     try:
         # Leer variables de entorno
         secret_name = os.environ["SECRET_NAME"]
