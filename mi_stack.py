@@ -78,7 +78,7 @@ class MiStack(Stack):
         #
         user_pool = cognito.UserPool(
             self,
-            f"{env_name}-userpool",
+            f"{env_name}-userpool-v2",
             self_sign_up_enabled=False,
             sign_in_aliases=cognito.SignInAliases(email=True),
         )
