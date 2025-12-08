@@ -3,7 +3,8 @@ from aws_cdk import (
     Duration,
     aws_lambda as _lambda,
     aws_secretsmanager as secretsmanager,
-    aws_apigateway as apigw
+    aws_apigateway as apigw,
+    aws_cognito as cognito
 )
 from constructs import Construct
 
@@ -83,6 +84,8 @@ class MiStack(Stack):
         api.root.add_resource("db-test").add_method(
             "GET",
             apigw.LambdaIntegration(lambda_fn),
+            authorization_type=apigw.AuthorizationType.COGNITO,
+            authorizer=authorizer,
             request_parameters={
                 "method.request.querystring.tipo_solicitud": True,
                 "method.request.querystring.prioridad": True,
@@ -90,3 +93,41 @@ class MiStack(Stack):
             },
             request_validator=validator
         )
+        user_pool = cognito.UserPool(
+            self,
+            f"{env_name}-userpool",
+            self_sign_up_enabled=False,      # Nadie se registra solo
+            sign_in_aliases=cognito.SignInAliases(email=True),
+            password_policy=cognito.PasswordPolicy(min_length=8),
+        )
+        
+        user_pool_domain = user_pool.add_domain(
+            f"{env_name}-domain",
+            cognito_domain=cognito.CognitoDomainOptions(
+                domain_prefix=f"{env_name}-auth-{id.lower()}"
+            )
+        )
+        user_pool_client = user_pool.add_client(
+            f"{env_name}-client",
+            auth_flows=cognito.AuthFlow(
+                user_password=True
+            ),
+            o_auth=cognito.OAuthSettings(
+                flows=cognito.OAuthFlows(authorization_code_grant=True),
+                scopes=[cognito.OAuthScope.OPENID],
+                callback_urls=["https://example.com/callback"],  # Cambia aquí
+                logout_urls=["https://example.com/logout"]
+            ),
+            generate_secret=True
+        )
+        
+        authorizer = apigw.CognitoUserPoolsAuthorizer(
+            self,
+            f"{env_name}-authorizer",
+            cognito_user_pools=[user_pool]
+        )
+
+
+        
+
+
