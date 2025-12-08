@@ -18,18 +18,12 @@ class MiStack(Stack):
 
         super().__init__(scope, id, env=kwargs.get("env"))
 
-        #
-        # 1️⃣ Importar secreto
-        #
+        # 1️⃣ Secret
         secret = secretsmanager.Secret.from_secret_name_v2(
-            self,
-            f"{env_name}-rds-secret",
-            aws_secret
+            self, f"{env_name}-rds-secret", aws_secret
         )
 
-        #
         # 2️⃣ Layer
-        #
         lambda_layer = _lambda.LayerVersion(
             self,
             f"{env_name}-deps-layer",
@@ -37,9 +31,7 @@ class MiStack(Stack):
             compatible_runtimes=[_lambda.Runtime.PYTHON_3_12]
         )
 
-        #
         # 3️⃣ Lambda
-        #
         lambda_fn = _lambda.Function(
             self,
             f"{env_name}-lambda-rds",
@@ -57,9 +49,7 @@ class MiStack(Stack):
 
         secret.grant_read(lambda_fn)
 
-        #
         # 4️⃣ API Gateway
-        #
         api = apigw.RestApi(
             self,
             f"{env_name}-api",
@@ -73,9 +63,7 @@ class MiStack(Stack):
             validate_request_parameters=True
         )
 
-        #
-        # 5️⃣ User Pool
-        #
+        # 5️⃣ Cognito User Pool
         user_pool = cognito.UserPool(
             self,
             f"{env_name}-userpool-v2",
@@ -83,9 +71,7 @@ class MiStack(Stack):
             sign_in_aliases=cognito.SignInAliases(email=True),
         )
 
-        #
-        # 6️⃣ Resource Server + Scope (obligatorio para client_credentials)
-        #
+        # 6️⃣ Resource Server + Scope
         read_scope = cognito.ResourceServerScope(
             scope_name="read",
             scope_description="Read access"
@@ -97,15 +83,11 @@ class MiStack(Stack):
             scopes=[read_scope]
         )
 
-        # OAuthScope requiere: (resource_server, ResourceServerScope)
         api_scope = cognito.OAuthScope.resource_server(
-            resource_server,
-            read_scope
+            resource_server, read_scope
         )
 
-        #
-        # 7️⃣ Cognito Domain
-        #
+        # 7️⃣ Domain
         user_pool.add_domain(
             f"{env_name}-domain",
             cognito_domain=cognito.CognitoDomainOptions(
@@ -113,9 +95,7 @@ class MiStack(Stack):
             )
         )
 
-        #
         # 8️⃣ User Pool Client
-        #
         user_pool_client = user_pool.add_client(
             f"{env_name}-client",
             generate_secret=True,
@@ -124,36 +104,45 @@ class MiStack(Stack):
                 admin_user_password=False
             ),
             o_auth=cognito.OAuthSettings(
-                flows=cognito.OAuthFlows(
-                    client_credentials=True
-                ),
-                scopes=[api_scope]    # 🔥 OBLIGATORIO — SIN ESTO FALLA
+                flows=cognito.OAuthFlows(client_credentials=True),
+                scopes=[api_scope]
             )
         )
 
-        #
-        # 9️⃣ Authorizer
-        #
-        authorizer = apigw.CognitoUserPoolsAuthorizer(
+        # 9️⃣ JWT Authorizer (LOW LEVEL)
+        jwt_authorizer = apigw.CfnAuthorizer(
             self,
-            f"{env_name}-authorizer",
-            cognito_user_pools=[user_pool]
+            f"{env_name}-jwt-authorizer",
+            name=f"{env_name}-jwt-authorizer",
+            rest_api_id=api.rest_api_id,
+            identity_source="method.request.header.Authorization",
+            type="JWT",
+            jwt_configuration=apigw.CfnAuthorizer.JWTConfigurationProperty(
+                issuer=f"https://cognito-idp.us-east-2.amazonaws.com/{user_pool.user_pool_id}",
+                audience=[user_pool_client.user_pool_client_id]
+            )
         )
 
-        #
-        # 🔟 Endpointss
-        #
+        # 🔟 Endpoints
         api.root.add_resource("health").add_method("GET")
 
-        api.root.add_resource("db-test").add_method(
+        # Endpoint protegido
+        db_test_resource = api.root.add_resource("db-test")
+
+        db_test_method = db_test_resource.add_method(
             "GET",
             apigw.LambdaIntegration(lambda_fn),
-            authorization_type=apigw.AuthorizationType.COGNITO,
-            authorizer=authorizer,
+            authorization_type=apigw.AuthorizationType.CUSTOM,  # OBLIGATORIO
             request_parameters={
                 "method.request.querystring.tipo_solicitud": True,
                 "method.request.querystring.prioridad": True,
                 "method.request.querystring.fecha_materializacion": False
             },
             request_validator=validator
+        )
+
+        # Asignar el Authorizer al método manualmente
+        db_test_method_resource = db_test_method.node.default_child
+        db_test_method_resource.add_override(
+            "Properties.AuthorizerId", jwt_authorizer.ref
         )
