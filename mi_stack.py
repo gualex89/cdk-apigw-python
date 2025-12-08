@@ -141,7 +141,7 @@ class MiStack(Stack):
         )
 
         #
-        # 🔟 Endpoints
+        # 🔟 Endpointss
         #
         api.root.add_resource("health").add_method("GET")
 
