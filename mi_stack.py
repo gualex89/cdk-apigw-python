@@ -153,6 +153,7 @@ class MiStack(Stack):
             request_parameters={
                 "method.request.querystring.tipo_solicitud": True,
                 "method.request.querystring.prioridad": True
+                "method.request.querystring.fecha_materializacion": False
             },
             request_validator=validator
         )
