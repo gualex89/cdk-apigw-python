@@ -93,7 +93,7 @@ class MiStack(Stack):
 
         resource_server = user_pool.add_resource_server(
             f"{env_name}-resource-server",
-            identifier=f"{env_name}-api",
+            identifier=f"{env_name.lower()}-api",
             scopes=[read_scope]
         )
 
