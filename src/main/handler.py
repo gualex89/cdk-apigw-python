@@ -2,13 +2,15 @@ import os
 import json
 import boto3
 from datetime import date, datetime
-from db import fetch_solicitud
+from src.main.helpers.db import fetch_solicitud
 
 
 def json_serializer(obj):
-    """Convierte dates a string ISO"""
+    """Convierte dates y Decimals a string ISO o float"""
     if isinstance(obj, (date, datetime)):
         return obj.isoformat()
+    elif isinstance(obj, Decimal):
+        return float(obj)  # Convierte Decimal a float
     raise TypeError(f"Type {type(obj)} not serializable")
 
 
