@@ -6,10 +6,10 @@ def fetch_solicitud(
     creds: Dict[str, Any],
     tipo_solicitud: Optional[str],
     prioridad: Optional[str],
-) -> Optional[Sequence[Any]]:
+) -> Optional[Sequence[Dict[str, Any]]]:
     """
     Ejecuta la consulta principal usando las credenciales de Secrets Manager.
-    Devuelve la primera fila o None si no hay resultados.
+    Devuelve todas las filas como diccionarios o None si no hay resultados.
     """
     conn = psycopg2.connect(
         host=creds["host"],
@@ -22,9 +22,13 @@ def fetch_solicitud(
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT * from solicitudes WHERE tipo_solicitud = %s AND prioridad = %s;",
+                "SELECT * FROM solicitudes WHERE tipo_solicitud = %s AND prioridad = %s ORDER BY id;",
                 (tipo_solicitud, prioridad),
             )
-            return cur.fetchall()
+            columns = [desc[0] for desc in cur.description]  # Obtener nombres de columnas
+            rows = cur.fetchall()  # Obtener todas las filas
+
+            # Convertir filas a diccionarios
+            return [dict(zip(columns, row)) for row in rows] if rows else None
     finally:
         conn.close()
