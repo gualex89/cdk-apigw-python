@@ -18,7 +18,6 @@ class MiStack(Stack):
 
         super().__init__(scope, id, env=kwargs.get("env"))
 
-
         #
         # 1️⃣ Importar el secreto de RDS
         #
@@ -29,7 +28,7 @@ class MiStack(Stack):
         )
 
         #
-        # 2️⃣ Crear Layer con dependencias (construido por el pipeline)
+        # 2️⃣ Crear Layer
         #
         lambda_layer = _lambda.LayerVersion(
             self,
@@ -57,7 +56,6 @@ class MiStack(Stack):
             layers=[lambda_layer]
         )
 
-        # Permisos para leer secreto
         secret.grant_read(lambda_fn)
 
         #
@@ -69,7 +67,7 @@ class MiStack(Stack):
             rest_api_name=f"{env_name}-api",
             description="API Gateway creada por CDK"
         )
-        
+
         validator = apigw.RequestValidator(
             self,
             f"{env_name}-request-validator",
@@ -89,7 +87,7 @@ class MiStack(Stack):
         )
 
         #
-        # 6️⃣ Resource Server + Scope (🔥 corrección aquí)
+        # 6️⃣ Resource Server + Scope
         #
         read_scope = cognito.ResourceServerScope(
             scope_name="read",
@@ -99,12 +97,13 @@ class MiStack(Stack):
         resource_server = user_pool.add_resource_server(
             f"{env_name}-resource-server",
             identifier=f"{env_name}-api",
-            scopes=[read_scope]   # ahora usamos el objeto, no resource_server.scopes
+            scopes=[read_scope]
         )
 
+        # ❗ CORRECCIÓN — Debe ser STRING, no un objeto
         api_scope = cognito.OAuthScope.resource_server(
             resource_server,
-            read_scope   # 🔥 FIX FINAL — lo único que era necesario cambiar
+            "read"
         )
 
         #
@@ -118,7 +117,7 @@ class MiStack(Stack):
         )
 
         #
-        # 8️⃣ User Pool Client con Client Credentials
+        # 8️⃣ User Pool Client con Client Credentials 🤝
         #
         user_pool_client = user_pool.add_client(
             f"{env_name}-client",
@@ -131,7 +130,7 @@ class MiStack(Stack):
                 flows=cognito.OAuthFlows(
                     client_credentials=True
                 ),
-                scopes=[api_scope]   # 🔥 scope válido
+                scopes=[api_scope]
             )
         )
 
@@ -148,10 +147,8 @@ class MiStack(Stack):
         # 🔟 Rutas
         #
 
-        # GET /health
         api.root.add_resource("health").add_method("GET")
 
-        # GET /db-test → Lambda protegida por Cognito
         api.root.add_resource("db-test").add_method(
             "GET",
             apigw.LambdaIntegration(lambda_fn),
