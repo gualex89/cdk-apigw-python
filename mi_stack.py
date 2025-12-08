@@ -106,7 +106,8 @@ class MiStack(Stack):
             o_auth=cognito.OAuthSettings(
                 flows=cognito.OAuthFlows(
                     client_credentials=True
-                )
+                ),
+                scopes=[]
                 # NO SCOPES → compatible con tu CDK
             )
         )
