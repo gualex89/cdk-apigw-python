@@ -39,7 +39,7 @@ def handler(event, context):
         )
 
         cur = conn.cursor()
-        cur.execute("SELECT NOW();")
+        cur.execute("SELECT * from solicitudes WHERE tipo_solicitud = %s AND prioridad = %s;", (tipo_solicitud, prioridad))
         result = cur.fetchone()
 
         cur.close()
