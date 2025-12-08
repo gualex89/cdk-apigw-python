@@ -22,7 +22,7 @@ def fetch_solicitud(
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT nombre_solicitante from solicitudes WHERE tipo_solicitud = %s AND prioridad = %s;",
+                "SELECT * from solicitudes WHERE tipo_solicitud = %s AND prioridad = %s;",
                 (tipo_solicitud, prioridad),
             )
             return cur.fetchone()
