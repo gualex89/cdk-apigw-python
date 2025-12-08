@@ -95,7 +95,10 @@ class MiStack(Stack):
             ]
         )
 
-        api_scope = cognito.OAuthScope.resource_server(resource_server, "read")
+        api_scope = cognito.OAuthScope.resource_server(
+            resource_server,
+            resource_server.scopes[0].scope_name   # 🔥 FIX
+        )
 
         
         user_pool_domain = user_pool.add_domain(
