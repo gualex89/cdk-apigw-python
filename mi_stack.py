@@ -92,17 +92,19 @@ class MiStack(Stack):
         )
         user_pool_client = user_pool.add_client(
             f"{env_name}-client",
+            generate_secret=True,
             auth_flows=cognito.AuthFlow(
-                user_password=True
+                user_password=False,
+                admin_user_password=False
             ),
             o_auth=cognito.OAuthSettings(
-                flows=cognito.OAuthFlows(authorization_code_grant=True),
-                scopes=[cognito.OAuthScope.OPENID],
-                callback_urls=["https://example.com/callback"],  # Cambia aquí
-                logout_urls=["https://example.com/logout"]
-            ),
-            generate_secret=True
+                flows=cognito.OAuthFlows(
+                    client_credentials=True   # 🔥 ESTO ES LO IMPORTANTE
+                ),
+                scopes=[cognito.OAuthScope.OPENID]
+            )
         )
+
         
         authorizer = apigw.CognitoUserPoolsAuthorizer(
             self,
