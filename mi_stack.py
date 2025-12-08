@@ -76,38 +76,50 @@ class MiStack(Stack):
             rest_api=api,
             validate_request_parameters=True
         )
+
+        #
+        # 5️⃣ User Pool
+        #
         user_pool = cognito.UserPool(
             self,
             f"{env_name}-userpool",
-            self_sign_up_enabled=False,      # Nadie se registra solo
+            self_sign_up_enabled=False,
             sign_in_aliases=cognito.SignInAliases(email=True),
             password_policy=cognito.PasswordPolicy(min_length=8),
         )
-        
+
+        #
+        # 6️⃣ Resource Server + Scope (🔥 corrección aquí)
+        #
+        read_scope = cognito.ResourceServerScope(
+            scope_name="read",
+            scope_description="Read access for backend API"
+        )
+
         resource_server = user_pool.add_resource_server(
             f"{env_name}-resource-server",
             identifier=f"{env_name}-api",
-            scopes=[
-                cognito.ResourceServerScope(
-                    scope_name="read",
-                    scope_description="Read access for backend API"
-                )
-            ]
+            scopes=[read_scope]   # ahora usamos el objeto, no resource_server.scopes
         )
 
         api_scope = cognito.OAuthScope.resource_server(
             resource_server,
-            resource_server.scopes[0].scope_name   # 🔥 FIX
+            read_scope.scope_name   # 🔥 FIX FINAL — lo único que era necesario cambiar
         )
 
-        
+        #
+        # 7️⃣ Dominio Cognito
+        #
         user_pool_domain = user_pool.add_domain(
             f"{env_name}-domain",
             cognito_domain=cognito.CognitoDomainOptions(
                 domain_prefix=f"{env_name}-auth-{id.lower()}"
             )
         )
-        
+
+        #
+        # 8️⃣ User Pool Client con Client Credentials
+        #
         user_pool_client = user_pool.add_client(
             f"{env_name}-client",
             generate_secret=True,
@@ -119,24 +131,27 @@ class MiStack(Stack):
                 flows=cognito.OAuthFlows(
                     client_credentials=True
                 ),
-                scopes=[api_scope]     # 🔥 Scope válido, obligatorio
+                scopes=[api_scope]   # 🔥 scope válido
             )
         )
 
-
-
-        
+        #
+        # 9️⃣ Authorizer API Gateway
+        #
         authorizer = apigw.CognitoUserPoolsAuthorizer(
             self,
             f"{env_name}-authorizer",
             cognito_user_pools=[user_pool]
         )
-        
+
+        #
+        # 🔟 Rutas
+        #
 
         # GET /health
         api.root.add_resource("health").add_method("GET")
 
-        # GET /db-test → Lambda
+        # GET /db-test → Lambda protegida por Cognito
         api.root.add_resource("db-test").add_method(
             "GET",
             apigw.LambdaIntegration(lambda_fn),
@@ -149,11 +164,3 @@ class MiStack(Stack):
             },
             request_validator=validator
         )
-       
-        
-        
-
-
-        
-
-
