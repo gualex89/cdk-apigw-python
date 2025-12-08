@@ -19,7 +19,7 @@ class MiStack(Stack):
         super().__init__(scope, id, env=kwargs.get("env"))
 
         #
-        # 1️⃣ Importar el secreto
+        # 1️⃣ Importar secreto
         #
         secret = secretsmanager.Secret.from_secret_name_v2(
             self,
@@ -74,7 +74,7 @@ class MiStack(Stack):
         )
 
         #
-        # 5️⃣ User Pool (sin Resource Server)
+        # 5️⃣ User Pool
         #
         user_pool = cognito.UserPool(
             self,
@@ -84,7 +84,27 @@ class MiStack(Stack):
         )
 
         #
-        # 6️⃣ Cognito Domain
+        # 6️⃣ Resource Server + Scope (obligatorio para client_credentials)
+        #
+        read_scope = cognito.ResourceServerScope(
+            scope_name="read",
+            scope_description="Read access"
+        )
+
+        resource_server = user_pool.add_resource_server(
+            f"{env_name}-resource-server",
+            identifier=f"{env_name}-api",
+            scopes=[read_scope]
+        )
+
+        # OAuthScope requiere: (resource_server, ResourceServerScope)
+        api_scope = cognito.OAuthScope.resource_server(
+            resource_server,
+            read_scope
+        )
+
+        #
+        # 7️⃣ Cognito Domain
         #
         user_pool.add_domain(
             f"{env_name}-domain",
@@ -94,9 +114,9 @@ class MiStack(Stack):
         )
 
         #
-        # 7️⃣ User Pool App Client (Client Credentials SIN scopes)
+        # 8️⃣ User Pool Client
         #
-        client = user_pool.add_client(
+        user_pool_client = user_pool.add_client(
             f"{env_name}-client",
             generate_secret=True,
             auth_flows=cognito.AuthFlow(
@@ -107,13 +127,12 @@ class MiStack(Stack):
                 flows=cognito.OAuthFlows(
                     client_credentials=True
                 ),
-                scopes=[]
-                # NO SCOPES → compatible con tu CDK
+                scopes=[api_scope]    # 🔥 OBLIGATORIO — SIN ESTO FALLA
             )
         )
 
         #
-        # 8️⃣ Authorizer
+        # 9️⃣ Authorizer
         #
         authorizer = apigw.CognitoUserPoolsAuthorizer(
             self,
@@ -122,7 +141,7 @@ class MiStack(Stack):
         )
 
         #
-        # 9️⃣ Rutas
+        # 🔟 Endpoints
         #
         api.root.add_resource("health").add_method("GET")
 
