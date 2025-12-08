@@ -2,7 +2,7 @@ import os
 import json
 import boto3
 from datetime import date, datetime
-from src.main.helpers.db import fetch_solicitud
+from helpers.db import fetch_solicitud
 
 
 def json_serializer(obj):
