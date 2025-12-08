@@ -25,6 +25,6 @@ def fetch_solicitud(
                 "SELECT * from solicitudes WHERE tipo_solicitud = %s AND prioridad = %s;",
                 (tipo_solicitud, prioridad),
             )
-            return cur.fetchone()
+            return cur.fetchall()
     finally:
         conn.close()
