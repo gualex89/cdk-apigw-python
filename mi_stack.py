@@ -76,30 +76,6 @@ class MiStack(Stack):
             rest_api=api,
             validate_request_parameters=True
         )
-        
-        authorizer = apigw.CognitoUserPoolsAuthorizer(
-            self,
-            f"{env_name}-authorizer",
-            cognito_user_pools=[user_pool]
-        )
-        
-
-        # GET /health
-        api.root.add_resource("health").add_method("GET")
-
-        # GET /db-test → Lambda
-        api.root.add_resource("db-test").add_method(
-            "GET",
-            apigw.LambdaIntegration(lambda_fn),
-            authorization_type=apigw.AuthorizationType.COGNITO,
-            authorizer=authorizer,
-            request_parameters={
-                "method.request.querystring.tipo_solicitud": True,
-                "method.request.querystring.prioridad": True,
-                "method.request.querystring.fecha_materializacion": False
-            },
-            request_validator=validator
-        )
         user_pool = cognito.UserPool(
             self,
             f"{env_name}-userpool",
@@ -127,6 +103,31 @@ class MiStack(Stack):
             ),
             generate_secret=True
         )
+        
+        authorizer = apigw.CognitoUserPoolsAuthorizer(
+            self,
+            f"{env_name}-authorizer",
+            cognito_user_pools=[user_pool]
+        )
+        
+
+        # GET /health
+        api.root.add_resource("health").add_method("GET")
+
+        # GET /db-test → Lambda
+        api.root.add_resource("db-test").add_method(
+            "GET",
+            apigw.LambdaIntegration(lambda_fn),
+            authorization_type=apigw.AuthorizationType.COGNITO,
+            authorizer=authorizer,
+            request_parameters={
+                "method.request.querystring.tipo_solicitud": True,
+                "method.request.querystring.prioridad": True,
+                "method.request.querystring.fecha_materializacion": False
+            },
+            request_validator=validator
+        )
+       
         
         
 
