@@ -126,6 +126,7 @@ class MiStack(Stack):
             apigw.LambdaIntegration(lambda_fn),
             authorization_type=apigw.AuthorizationType.COGNITO,
             authorizer=authorizer,
+            authorization_scopes=[f"{resource_server.user_pool_resource_server_id}/read"],
             request_parameters={
                 "method.request.querystring.tipo_solicitud": True,
                 "method.request.querystring.prioridad": True,
