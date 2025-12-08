@@ -25,6 +25,16 @@ def handler(event, context):
     fecha_creacion_desde = query_params.get("fecha_creacion_desde")
     fecha_creacion_hasta = query_params.get("fecha_creacion_hasta")
 
+    # Validar rangos de fecha de creación: o vienen ambos o ninguno
+    if bool(fecha_creacion_desde) != bool(fecha_creacion_hasta):
+        return {
+            "statusCode": 400,
+            "body": json.dumps({
+                "ok": False,
+                "error": "Debe enviar ambos parámetros fecha_creacion_desde y fecha_creacion_hasta si usa el filtro de fechas."
+            }),
+        }
+
     try:
         secret_name = os.environ["SECRET_NAME"]
         region_name = os.environ["AWS_REGION"]

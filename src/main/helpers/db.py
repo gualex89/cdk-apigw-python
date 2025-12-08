@@ -21,8 +21,9 @@ def fetch_solicitud(
         password=creds["password"],
         port=creds["port"],
     )
-    
-    
+
+    print(f" fecha_materializacion: {fecha_materializacion}, fecha_creacion_desde: {fecha_creacion_desde}, fecha_creacion_hasta: {fecha_creacion_hasta} ")
+
     try:
         with conn.cursor() as cur:
             sql = [
@@ -34,7 +35,7 @@ def fetch_solicitud(
             if fecha_materializacion:
                 sql.append("AND fecha_materializacion >= %s")
                 params.append(fecha_materializacion)
-
+    
             if fecha_creacion_desde and fecha_creacion_hasta:
                 sql.append("AND fecha_creacion BETWEEN %s AND %s")
                 params.extend([fecha_creacion_desde, fecha_creacion_hasta])
