@@ -52,7 +52,10 @@ def handler(event, context):
             "statusCode": 200,
             "body": json.dumps({
                 "ok": True,
-                "timestamp": str(result[0])
+                "timestamp": str(result[0]),
+                "tipo_solicitud": tipo_solicitud,
+                "prioridad": prioridad,
+                "fecha_materializacion": fecha_materializacion
             })
         }
 
