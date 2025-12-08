@@ -100,14 +100,13 @@ class MiStack(Stack):
             scopes=[read_scope]
         )
 
-        # ❗ CORRECCIÓN — Debe ser STRING, no un objeto
-        api_scope = cognito.OAuthScope.resource_server(
-            resource_server,
-            "read"
-        )
+        #
+        # 🔥 7️⃣ Define scope OAuth (FORMA COMPATIBLE CDK v2)
+        #
+        api_scope = f"{env_name}-api/read"
 
         #
-        # 7️⃣ Dominio Cognito
+        # 8️⃣ Dominio Cognito
         #
         user_pool_domain = user_pool.add_domain(
             f"{env_name}-domain",
@@ -117,7 +116,7 @@ class MiStack(Stack):
         )
 
         #
-        # 8️⃣ User Pool Client con Client Credentials 🤝
+        # 9️⃣ User Pool Client (Client Credentials)
         #
         user_pool_client = user_pool.add_client(
             f"{env_name}-client",
@@ -130,12 +129,12 @@ class MiStack(Stack):
                 flows=cognito.OAuthFlows(
                     client_credentials=True
                 ),
-                scopes=[api_scope]
+                scopes=[api_scope]   # 🔥 Scope válido, compatible
             )
         )
 
         #
-        # 9️⃣ Authorizer API Gateway
+        # 🔟 Authorizer API Gateway
         #
         authorizer = apigw.CognitoUserPoolsAuthorizer(
             self,
@@ -144,7 +143,7 @@ class MiStack(Stack):
         )
 
         #
-        # 🔟 Rutas
+        # 1️⃣1️⃣ Rutas
         #
 
         api.root.add_resource("health").add_method("GET")
